@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from matplotlib import cm
 import math
+import os
 
 def get_DT_CWT_Level1_Coff(img_gray,resize=1):
     transform = dtcwt.Transform2d()
@@ -66,7 +67,7 @@ def freq_trans_func(freq,theta):
     return trans_value
 
 
-def get_filtered_img(img_in):
+def get_filtered_CSF_img(img_in):
     img_dft = cv2.dft(np.float32(img_in), flags=cv2.DFT_COMPLEX_OUTPUT)
     dft_shift = np.fft.fftshift(img_dft)
     height = img_dft.shape[0]
@@ -101,35 +102,125 @@ def get_filtered_img(img_in):
 
 
 
+def get_contrast_by_brocks(img):
+    weight = img.shape[1]
+    height = img.shape[0]
+
+    w_blocks = int(math.floor(weight/16))
+    h_blocks = int(math.floor(height/16))
+    contrast_list = []
+    for w_idx in range((w_blocks-1)*4+1):
+        for h_idx in range((h_blocks-1)*4+1):
+            roi = img[w_idx*4:w_idx*4+16,h_idx*4:h_idx*4+16]
+            roi_mean = np.mean(roi)
+            roi_std = np.std(roi)
+            roi_contrast = roi_std/roi_mean
+            contrast_list.append(roi_contrast)
+    contrast_list = np.array(contrast_list)
+    return contrast_list
+
+
+def get_Total_MAD(img_ori_f,img_err_f):
+    width = img_ori_f.shape[1]
+    height = img_ori_f.shape[0]
+
+    w_blocks = int(math.floor(width / 16))
+    h_blocks = int(math.floor(height / 16))
+    mad_score = 0
+    count = 0
+    weight_img = []
+    for w_idx in range((w_blocks - 1) * 4 + 1):
+        weight_line = []
+        for h_idx in range((h_blocks - 1) * 4 + 1):
+            roi_ori = img_ori_f[w_idx * 4:w_idx * 4 + 16, h_idx * 4:h_idx * 4 + 16]
+            roi_ori_mean = np.mean(roi_ori)
+            roi_ori_std = np.std(roi_ori)
+            roi_contrast_ori = roi_ori_std / roi_ori_mean
+
+            roi_err = img_err_f[w_idx * 4:w_idx * 4 + 16, h_idx * 4:h_idx * 4 + 16]
+            roi_err_mean = np.mean(roi_err)
+            roi_err_std = np.std(roi_err)
+            roi_contrast_err = roi_err_std / roi_ori_mean
+            if roi_contrast_err == 0:
+                print 'Seems no err exits. Exit.'
+                exit(0)
+            c_err_ln = math.log(roi_contrast_err)
+            c_ori_ln = math.log(roi_contrast_ori)
+            thd = -5
+            weight_block = -1
+            if c_err_ln>c_ori_ln and c_ori_ln>thd:
+                weight_block = c_err_ln-c_ori_ln
+            elif c_err_ln>thd and c_ori_ln<=thd:
+                weight_block = c_err_ln - thd
+            else:
+                weight_block = 0
+            weight_line.append(weight_block)
+
+            D = np.sum(np.power(roi_err,2))/(16**2)
+            D_weighted = D*weight_block
+            mad_score+=D_weighted**2
+            count+=1
+        weight_img.append(weight_line)
+
+    weight_img = np.array(weight_img)
+    weight_img = cv2.resize(weight_img,img_ori_filtered.shape)
+    plt.figure("Weight Image")
+    plt.imshow(weight_img,cmap='gray')
+    mad_score = (mad_score/count)**0.5
+
+
+    return mad_score
+
+
+
 if __name__ == "__main__":
-    img_ori_path = './mandrill.png'
-    img_degraded_path = './mandrill.jpg'
+    picpath = './pics'
+    imgname_ori = 'barbara.png'
+    imgname_de = 'barbara_dark2.jpg'
+    #imgname_de = imgname_ori
+
+    img_ori_path = os.path.join(picpath,imgname_ori)
+    img_degraded_path = os.path.join(picpath,imgname_de)
     img_ori = cv2.imread(img_ori_path,cv2.CV_LOAD_IMAGE_GRAYSCALE)
     img_de = cv2.imread(img_degraded_path,cv2.CV_LOAD_IMAGE_GRAYSCALE)
     img_diff = img_ori-img_de
 
 
-    plt.figure(0)
-    plt.subplot(1,3,1)
-    plt.imshow(img_ori,cmap='gray')
-    plt.subplot(1,3,2)
-    plt.imshow(img_de, cmap='gray')
-    plt.subplot(1, 3, 3)
-    plt.imshow(img_diff, cmap='gray')
+
+
+    img_ori_L = get_percei_lum(img_ori)
+    img_ori_filtered = get_filtered_CSF_img(img_ori_L)
+
+    img_error_L = get_percei_lum(img_ori)-get_percei_lum(img_de)
+    img_error_filtered = get_filtered_CSF_img(img_error_L)
+
+    # contrast_ori = get_contrast_by_brocks(img_ori_filtered)
+    # contrast_diff = get_contrast_by_brocks(img_error_filtered)
+    # print np.mean(contrast_ori), np.std(contrast_ori)
+    # print np.mean(contrast_diff), np.std(contrast_diff)
+
+    # plt.figure(0)
+    # plt.subplot(1,3,1)
+    # plt.imshow(img_ori,cmap='gray')
+    # plt.subplot(1,3,2)
+    # plt.imshow(img_de, cmap='gray')
+    # plt.subplot(1, 3, 3)
+    # plt.imshow(img_error_L, cmap='gray')
 
 
 
-    img_f_ori = get_filtered_img(img_ori)
-    img_f_diff = get_filtered_img(img_diff)
+
 
     plt.figure(1)
     plt.subplot(1,2,1)
-    plt.imshow(img_f_ori,cmap='gray')
-    plt.title("filter ori")
+    plt.imshow(img_ori_filtered,cmap='gray')
+    plt.title("Lumia CSF filtered Origin Pic.")
     plt.subplot(1,2,2)
-    plt.imshow(img_f_diff,cmap='gray')
-    plt.title("filter diff")
+    plt.imshow(img_error_filtered,cmap='gray')
+    plt.title("Lumia CSF filtered Error Pic.")
 
+    score = get_Total_MAD(img_ori_filtered,img_error_filtered)
+    print 'MAD score: ',score
 
     plt.show()
 
