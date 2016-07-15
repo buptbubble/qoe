@@ -3,6 +3,7 @@ import dtcwt
 from matplotlib import pyplot as plt
 import numpy as np
 import math
+import multiprocessing
 
 
 class QoE_algorithm:
@@ -75,8 +76,12 @@ class QoE_algorithm:
         return imgback
 
 
-    def get_Total_MAD(self,img_ori, img_de):
-        
+    def get_Total_MAD(self,img_ori_path, img_de_path):
+
+        img_ori = cv2.imread(img_ori_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+        img_de = cv2.imread(img_de_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+
+
         img_ori_L = self.get_percei_lum(img_ori)
         img_ori_f = self.get_filtered_CSF_img(img_ori_L)
 
@@ -148,3 +153,11 @@ class QoE_algorithm:
         mad_score = (mad_score / count) ** 0.5
 
         return mad_score
+
+    def get_MADlist_by_multiProcess(self,imagedata):
+        pool = multiprocessing.Pool(processes=4)
+        for info in imagedata:
+            imgref = info[0]
+            imgde = info[1]
+            dmos = info[2]
+            mad = qoe.get_Total_MAD(imgref, imgde)

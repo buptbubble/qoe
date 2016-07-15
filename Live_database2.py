@@ -21,6 +21,7 @@ class live_database2():
         infopath = os.path.join(folder,'info.txt')
         dmospath = os.path.join(folder,'dmos.txt')
         dmos = []
+        datalist = []
         fr = open(dmospath,'r')
         for line in fr:
             dmos = line.split(',')
@@ -35,7 +36,9 @@ class live_database2():
 
             imgref = cv2.imread(refimg_path,cv2.CV_LOAD_IMAGE_GRAYSCALE)
             imgde = cv2.imread(deimg_path,cv2.CV_LOAD_IMAGE_GRAYSCALE)
-            yield imgref,imgde,float(dmos[i])
+            datalist.append([refimg_path,deimg_path,dmos[i]])
+            #yield imgref,imgde,float(dmos[i])
+        return datalist
 
 
 if __name__ == '__main__':
