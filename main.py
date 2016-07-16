@@ -12,7 +12,11 @@ if __name__ == "__main__":
     madlist = []
     dmoslist = []
 
-    imagedata = live_db2.get_degrade_ref_pic(live_db2.jp2k_path)
+    imagedata_jp2k = random.sample(live_db2.get_degrade_ref_pic(live_db2.jp2k_path),50)
+    imagedata_jp2k = random.sample(live_db2.get_degrade_ref_pic(live_db2.jp2k_path),50)
+    imagedata_jp2k = random.sample(live_db2.get_degrade_ref_pic(live_db2.jp2k_path),50)
+    imagedata_jp2k = random.sample(live_db2.get_degrade_ref_pic(live_db2.jp2k_path),50)
+
 
     # for img in imagedata:
     #     imgori = img[0]

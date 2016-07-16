@@ -32,10 +32,6 @@ class live_database2():
         for i,line in enumerate(fr):
             refimg_path = os.path.join(self.ref_path,line.split(' ')[0])
             deimg_path = os.path.join(folder,line.split(' ')[1])
-
-
-            imgref = cv2.imread(refimg_path,cv2.CV_LOAD_IMAGE_GRAYSCALE)
-            imgde = cv2.imread(deimg_path,cv2.CV_LOAD_IMAGE_GRAYSCALE)
             datalist.append([refimg_path,deimg_path,dmos[i]])
             #yield imgref,imgde,float(dmos[i])
         return datalist
