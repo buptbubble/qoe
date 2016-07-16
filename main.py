@@ -1,42 +1,49 @@
 
 from matplotlib import pyplot as plt
 
-from QoE_algorithm import QoE_algorithm
+import QoE_algorithm as qa
 from Live_database2 import live_database2
 import math
+import random
+import numpy as np
 
 if __name__ == "__main__":
-    qoe = QoE_algorithm()
     live_db2 = live_database2()
     madlist = []
     dmoslist = []
 
     imagedata = live_db2.get_degrade_ref_pic(live_db2.jp2k_path)
-    for info in imagedata:
-        imgref = info[0]
-        imgde = info[1]
-        dmos = info[2]
-        mad = qoe.get_Total_MAD(imgref,imgde)
-        print 'MAD log score: ', mad, "  DMOS:", dmos
-        if dmos != 0:
-            if mad == 0:
-                mad = 10
-            madlog = math.log(mad)
-            madlist.append(madlog)
-            dmoslist.append(dmos)
 
-    # for imgref, imgde, dmos in live_db2.get_degrade_ref_pic(live_db2.jp2k_path):
-    #     mad = qoe.get_Total_MAD(imgref, imgde)
-    #     print 'MAD log score: ', mad,"  DMOS:",dmos
-    #     if dmos != 0:
-    #         if mad == 0:
-    #             mad = 10
-    #         madlog = math.log(mad)
-    #         madlist.append(madlog)
-    #         dmoslist.append(dmos)
-    plt.plot(madlog,dmos,ls='or')
-    plt.xlabel('log-MAD')
-    plt.ylabel('DMOS')
+    # for img in imagedata:
+    #     imgori = img[0]
+    #     imgde = img[1]
+    #     ssim = qoe.getSSIM(imgori,imgde)
+    #     psnr = qoe.getPSNR(imgori,imgde)
+    #     print 'ssim:',ssim,'\tpsnr:',psnr
+    #
+    #
+    # exit(0)
+    funcset = []
+    funcset.append(qa.get_PSNR)
+    funcset.append(qa.get_SSIM)
+    funcset.append(qa.get_Total_MAD)
+
+    for func in funcset:
+        resultdata = qa.get_MADlist_by_multiProcess(imagedata,func)
+        funcname = func.__name__.split('_')[-1]
+        resultdata = np.array(resultdata)
+
+        dmos = resultdata[:,0]
+
+        val = resultdata[:,1]
+        if funcname == 'MAD':
+            for i,item in enumerate(val):
+                if item!=0:
+                    val[i] = np.log(val[i])
+        plt.figure(funcname)
+        plt.plot(dmos,val,'o')
+        plt.title('Total samples:'+str(dmos.size))
+        plt.xlabel('d-mos')
+        plt.ylabel(funcname)
     plt.show()
-
 
