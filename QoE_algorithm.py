@@ -5,6 +5,7 @@ import numpy as np
 import math
 import multiprocessing
 import ssim
+import copy
 
 def run(cls_instance, paras):
     return paras[0](paras[1],paras[2],paras[3])
@@ -191,26 +192,29 @@ def get_MADlist_by_multiProcess(imagedata,func):
     manager = multiprocessing.Manager()
 
     count = manager.list([0])
-    resultlist=[]
+    #result_q = manager.queue()
+
+    #resultlist=[]
     datalist = []
     for info in imagedata:
         imgref = info[0]
         imgde = info[1]
-        dmos = float(info[2])
+        dmos = info[2]
         degrationtype = info[3]
-
-        #paras = [func,imgref, imgde,count]
         result = pool.apply_async(func,(imgref, imgde,count))
-        resultlist.append(result)
-        if dmos!=0:
-            datalist.append([dmos,result,degrationtype])
-
+        datalist.append([dmos,result,degrationtype])
     pool.close()
     pool.join()
     print "finish."
     for i in range(len(datalist)):
+        # dmos = datalist[i][0]
         mad = datalist[i][1].get()
+        # detype = datalist[i][2]
+        # imgde = datalist[i][3]
+        # if dmos ==0 and mad!=0:
+        #     print dmos,mad,detype,imgde
         datalist[i][1] = mad
-    return datalist
+    datalistR = copy.deepcopy(datalist)
+    return datalistR
 
 

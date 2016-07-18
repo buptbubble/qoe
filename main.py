@@ -11,10 +11,9 @@ from sklearn.linear_model import LogisticRegression
 from scipy.optimize import curve_fit
 
 
-colorlist = ['r','b','g','']
 
-def func_adj(x,a,b,c,d):
-    return (a-d)/(1+np.exp((x-b)/c))+d
+def func_adj(x,a,b):
+    return a*x+b
 
 if __name__ == "__main__":
     live_db2 = live_database2()
@@ -22,6 +21,8 @@ if __name__ == "__main__":
     dmoslist = []
 
     imagedata = live_db2.get_picinfo_all_folder(50)
+
+
 
     funcset = []
     funcset.append(qa.get_PSNR)
@@ -38,6 +39,7 @@ if __name__ == "__main__":
         for item in resultdata:
             dmos = item[0]
             val = item[1]
+            #print dmos,val,'-------------'
             if funcname == 'MAD' and val != 0:
                 val = math.log(val)
 
@@ -55,8 +57,12 @@ if __name__ == "__main__":
         # lrclf = LogisticRegression()
         # print type(vallist[0]),type(dmoslist[0])
         #lrclf.fit(vallist,dmoslist)
-        print len(vallist),len(dmoslist),type(vallist[0]),type(dmoslist[0])
-        popt, pcov = curve_fit(func_adj,vallist,dmoslist)
+        #print len(vallist),len(dmoslist),type(vallist[0]),type(dmoslist[0])
+        # plt.figure(0)
+        # plt.plot(dmoslist,vallist,'o')
+
+        popt, pcov = curve_fit(func_adj,np.array(dmoslist),np.array(vallist),(-1,1))
+        print popt,pcov
 
 
         plt.figure(funcname)
@@ -65,12 +71,14 @@ if __name__ == "__main__":
             data = np.array(drawdata[key])
             dmos = data[:,0]
             val = data[:, 1]
-            # val_adj=[]
-            # for value in val:
-            #     val_adj.append(lrclf.predict([value]))
 
             c=next(color)
             plt.plot(dmos,val,'o',color=c,label = key)
+        y=[]
+        for x in range(100):
+            y.append(func_adj(x,popt[0],popt[1]))
+        plt.plot(range(100),y,'ro-')
+
         plt.legend(loc=1)
 
         plt.xlabel('d-mos')

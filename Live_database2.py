@@ -3,6 +3,7 @@ import cv2
 from matplotlib import pyplot as plt
 import numpy as np
 import random
+import re
 
 
 
@@ -35,7 +36,9 @@ class live_database2():
         for i,line in enumerate(fr):
             refimg_path = os.path.join(self.ref_path,line.split(' ')[0])
             deimg_path = os.path.join(folder,line.split(' ')[1])
-            datalist.append([refimg_path,deimg_path,dmos[i],degrationType])
+            result = re.search("img(\d+)",deimg_path)
+            picidx = int(result.group(1))
+            datalist.append([refimg_path,deimg_path,float(dmos[picidx-1]),degrationType])
             #yield imgref,imgde,float(dmos[i])
         return datalist
 
@@ -59,7 +62,8 @@ class live_database2():
 
 if __name__ == '__main__':
     a = live_database2()
-    data = a.get_picinfo_all_folder(2)
+    data = a.get_degrade_ref_pic(a.gblur_path)
+    #data = a.get_picinfo_all_folder(10)
     for item in data:
         print item
 
