@@ -202,7 +202,8 @@ def get_MADlist_by_multiProcess(imagedata,func):
         dmos = info[2]
         degrationtype = info[3]
         result = pool.apply_async(func,(imgref, imgde,count))
-        datalist.append([dmos,result,degrationtype])
+        if dmos!=0:
+            datalist.append([dmos,result,degrationtype])
     pool.close()
     pool.join()
     print "finish."

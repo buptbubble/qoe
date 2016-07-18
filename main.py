@@ -12,17 +12,24 @@ from scipy.optimize import curve_fit
 
 
 
-def func_adj(x,a,b):
-    return a*x+b
+def func_adj(x,a,b,c,d):
+    return c+(a/(1+b*np.exp(x-d)))
 
 if __name__ == "__main__":
     live_db2 = live_database2()
     madlist = []
     dmoslist = []
 
-    imagedata = live_db2.get_picinfo_all_folder(50)
-
-
+    imagedata = live_db2.get_picinfo_all_folder(20)
+    # count =[0]
+    # for item in imagedata:
+    #     print item[0],item[1]
+    #     psnr = qa.get_PSNR(item[0],item[1],count)
+    #
+    #
+    #
+    #
+    # exit(0)
 
     funcset = []
     funcset.append(qa.get_PSNR)
@@ -61,7 +68,8 @@ if __name__ == "__main__":
         # plt.figure(0)
         # plt.plot(dmoslist,vallist,'o')
 
-        popt, pcov = curve_fit(func_adj,np.array(dmoslist),np.array(vallist),(-1,1))
+        # popt, pcov = curve_fit(func_adj,dmoslist,vallist)
+        popt, pcov = curve_fit(func_adj,dmoslist,vallist,p0=(2,2,2,2))
         print popt,pcov
 
 
@@ -76,7 +84,7 @@ if __name__ == "__main__":
             plt.plot(dmos,val,'o',color=c,label = key)
         y=[]
         for x in range(100):
-            y.append(func_adj(x,popt[0],popt[1]))
+            y.append(func_adj(x,popt[0],popt[1],popt[2],popt[3]))
         plt.plot(range(100),y,'ro-')
 
         plt.legend(loc=1)
