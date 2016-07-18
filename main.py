@@ -13,28 +13,30 @@ from scipy.optimize import curve_fit
 
 
 def func_adj(x,a,b,c,d):
-    return c+(a/(1+b*np.exp(x-d)))
+    return a/(1+np.exp((x*1.0-d)/b))+c
 
 if __name__ == "__main__":
+    # xlist = []
+    # ylist = []
+    # for x in range(-100,100,1):
+    #     xlist.append(x)
+    #     ylist.append(func_adj(x,30,20,20,50))
+    # plt.plot(xlist,ylist,color='r',ls='-')
+    # plt.show()
+    # exit(0)
+
+
+
     live_db2 = live_database2()
     madlist = []
     dmoslist = []
 
-    imagedata = live_db2.get_picinfo_all_folder(20)
-    # count =[0]
-    # for item in imagedata:
-    #     print item[0],item[1]
-    #     psnr = qa.get_PSNR(item[0],item[1],count)
-    #
-    #
-    #
-    #
-    # exit(0)
+    imagedata = live_db2.get_picinfo_all_folder(50)
 
     funcset = []
     funcset.append(qa.get_PSNR)
-   # funcset.append(qa.get_SSIM)
-   # funcset.append(qa.get_Total_MAD)
+    funcset.append(qa.get_SSIM)
+    funcset.append(qa.get_Total_MAD)
 
     for func in funcset:
         resultdata = qa.get_MADlist_by_multiProcess(imagedata,func)
@@ -61,35 +63,52 @@ if __name__ == "__main__":
 
         #-----logistics regression----#
 
-        # lrclf = LogisticRegression()
-        # print type(vallist[0]),type(dmoslist[0])
-        #lrclf.fit(vallist,dmoslist)
-        #print len(vallist),len(dmoslist),type(vallist[0]),type(dmoslist[0])
-        # plt.figure(0)
-        # plt.plot(dmoslist,vallist,'o')
+        popt, pcov = curve_fit(func_adj,vallist,dmoslist,p0=(28,15,18,28),maxfev=5000)
+        #print popt,pcov
 
-        # popt, pcov = curve_fit(func_adj,dmoslist,vallist)
-        popt, pcov = curve_fit(func_adj,dmoslist,vallist,p0=(2,2,2,2))
-        print popt,pcov
+        #----calculate correlation coeff---------#
+        dmoslist = np.array(dmoslist)
+        vallist_adj = np.array([func_adj(x,popt[0],popt[1],popt[2],popt[3]) for x in vallist])
+        corcoeff = np.corrcoef(dmoslist,vallist_adj,rowvar=0)[0][1]
+        # plt.figure(funcname+" Before Adjust")
+        #
+        # plt.plot(dmoslist,vallist,'or')
+        # x = range(100)
+        # y = [func_adj(xx,popt[0],popt[1],popt[2],popt[3]) for xx in x]
+        # plt.plot(x,y,'r-')
 
 
-        plt.figure(funcname)
+
+
+        #--------drawing------------#
+        f_adj = plt.figure(funcname)
+        f_ori = plt.figure(funcname+' Origin')
+        ax = f_adj.gca()
+        bx = f_ori.gca()
         color = iter(cm.rainbow(np.linspace(0, 1, len(drawdata.keys()))))
+
         for key in drawdata.keys():
             data = np.array(drawdata[key])
             dmos = data[:,0]
             val = data[:, 1]
+            val_adj = []
+            for val_temp in val:
+                val_a = func_adj(val_temp, popt[0], popt[1], popt[2], popt[3])
+                val_adj.append(val_a)
 
             c=next(color)
-            plt.plot(dmos,val,'o',color=c,label = key)
-        y=[]
-        for x in range(100):
-            y.append(func_adj(x,popt[0],popt[1],popt[2],popt[3]))
-        plt.plot(range(100),y,'ro-')
+            plt.sca(ax)
+            plt.plot(dmos,val_adj,'o',color=c,label = key)
+            plt.sca(bx)
+            plt.plot(dmos, val, 'o', color=c, label=key)
 
-        plt.legend(loc=1)
-
+        plt.sca(ax)
+        plt.plot([0,100],[0,100],ls = '-',color = 'r')
+        plt.legend(loc=2)
+        plt.title("Pearson Coeff.: "+"{:.3f}.".format(corcoeff))
         plt.xlabel('d-mos')
-        plt.ylabel(funcname)
+        plt.ylabel(funcname+" (Adjusted)")
+        plt.ylim((0,100))
+        plt.xlim((0,100))
     plt.show()
 
