@@ -80,9 +80,10 @@ def get_filtered_CSF_img(img_in):
     return imgback
 
 
-def get_Total_MAD(img_ori_path, img_de_path,count_multi):
-    count_multi[0]+=1
-    print "Processing image "+str(count_multi[0])+"..."
+def get_Total_MAD(img_ori_path, img_de_path,count_multi=[-1]):
+    if count_multi[0] != -1:
+        count_multi[0] += 1
+        print "Processing image " + str(count_multi[0]) + "..."
     img_ori = cv2.imread(img_ori_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
     img_de = cv2.imread(img_de_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
     img_ori = np.float32(img_ori)
@@ -91,10 +92,16 @@ def get_Total_MAD(img_ori_path, img_de_path,count_multi):
     img_ori_L = get_percei_lum(img_ori)
     img_ori_f = get_filtered_CSF_img(img_ori_L)
 
+    #img_de_f = get_filtered_CSF_img(get_percei_lum(img_de))
+    #return get_PSNR(img_ori_f,img_de_f)
+
     img_error_L = get_percei_lum(img_ori) - get_percei_lum(img_de)
     img_err_f = get_filtered_CSF_img(img_error_L)
-
-
+    plt.figure('After Lumia')
+    plt.imshow(img_ori_L,cmap='gray')
+    plt.figure('After Trans.')
+    plt.imshow(img_ori_f,cmap='gray')
+    plt.show()
 
     width = img_ori_f.shape[1]
     height = img_ori_f.shape[0]
@@ -158,11 +165,17 @@ def get_Total_MAD(img_ori_path, img_de_path,count_multi):
     mad_score = (mad_score / count) ** 0.5
     return mad_score
 
-def get_PSNR(img_ori_path, img_de_path,count_multi):
-    count_multi[0] += 1
-    print "Processing image " + str(count_multi[0]) + "..."
-    img_ori = cv2.imread(img_ori_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
-    img_de = cv2.imread(img_de_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+def get_PSNR(img_ori_path, img_de_path,count_multi=[-1]):
+    if count_multi[0]!=-1:
+        count_multi[0] += 1
+        print "Processing image " + str(count_multi[0]) + "..."
+
+    if type(img_de_path) == type('str'):
+        img_ori = cv2.imread(img_ori_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+        img_de = cv2.imread(img_de_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    else:
+        img_ori = img_ori_path
+        img_de = img_de_path
     img_ori = np.float32(img_ori)
     img_de = np.float32(img_de)
     img_diff = np.abs(img_ori-img_de)
