@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from matplotlib import pyplot as plt
 import QoE_algorithm as qa
 from Live_database2 import live_database2
@@ -17,16 +18,20 @@ if __name__ == "__main__":
     madlist = []
     dmoslist = []
 
-    imagedata = live_db2.get_picinfo_all_folder(5)
+    imagedata = live_db2.get_picinfo_all_folder(40)
     #imagedata = live_db2.get_degrade_ref_pic(live_db2.wn_path)
 
     funcset = []
     #funcset.append(qa.get_PSNR)
-    #funcset.append(qa.get_SSIM)
-    funcset.append(qa.get_Total_MAD)
+    funcset.append(qa.get_SSIM)
+    #funcset.append(qa.get_Total_MAD)
+    funcset.append(qa.getMAD)
+    funcset.append(qa.getWeightedMAD)
 
     for func in funcset:
-        resultdata = qa.get_MADlist_by_multiProcess(imagedata,func)
+        resultdata = qa.get_MADlist_by_multiProcess(imagedata,func,4)
+
+        #print resultdata
         funcname = func.__name__.split('_')[-1]
 
         drawdata = {}

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import cv2
 import dtcwt
 from matplotlib import pyplot as plt
@@ -9,6 +11,24 @@ import copy
 
 def run(cls_instance, paras):
     return paras[0](paras[1],paras[2],paras[3])
+
+
+def rms(img_array):
+    return math.sqrt(np.mean(img_array*img_array))
+
+def get_normalized_pic(img_input,mode):
+    fmin = np.min(img_input)
+    fmax = np.max(img_input)
+    img_ZeroOne = (img_input - fmin) / (fmax - fmin)
+    if mode == 'zero_one':
+        return img_ZeroOne
+    if mode == 'sum_one':
+        img_sum = np.sum(img_ZeroOne)
+        #print 'img sum',img_sum
+        img_output = img_ZeroOne/img_sum
+        return img_output
+    else:
+        return img_ZeroOne
 
 
 def get_DT_CWT_Level1_Coff(img_gray, resize=1):
@@ -101,6 +121,8 @@ def get_Total_MAD(img_ori_path, img_de_path,count_multi=[-1]):
     plt.imshow(img_ori_L,cmap='gray')
     plt.figure('After Trans.')
     plt.imshow(img_ori_f,cmap='gray')
+    plt.figure('Error img')
+    plt.imshow(img_error_L,cmap='gray')
     plt.show()
 
     width = img_ori_f.shape[1]
@@ -165,6 +187,65 @@ def get_Total_MAD(img_ori_path, img_de_path,count_multi=[-1]):
     mad_score = (mad_score / count) ** 0.5
     return mad_score
 
+
+
+def getMAD(img_ori_path, img_de_path, count_multi=[-1]):
+    if count_multi[0] != -1:
+        count_multi[0] += 1
+        print "Processing image " + str(count_multi[0]) + "..."
+    img_ori = cv2.imread(img_ori_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    img_de = cv2.imread(img_de_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    img_ori = np.float32(img_ori)
+    img_de = np.float32(img_de)
+    img_diff_ori = img_ori-img_de
+    err_rms = rms(img_diff_ori)
+
+    return err_rms
+
+def getWeightedMAD(img_ori_path, img_de_path, count_multi=[-1]):
+    show_weight_img = 0
+
+    if count_multi[0] != -1:
+        count_multi[0] += 1
+        print "Processing image " + str(count_multi[0]) + "..."
+    img_ori = cv2.imread(img_ori_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    img_de = cv2.imread(img_de_path, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    img_ori = np.float32(img_ori)
+    img_de = np.float32(img_de)
+
+    #img_diff = get_percei_lum(img_ori) - get_percei_lum(img_de)
+    img_diff_ori = img_ori-img_de
+
+    img_ori_L = get_percei_lum(img_ori)
+    img_ori_f = get_filtered_CSF_img(img_ori_L) #img_ori_f 作为一个权值
+
+
+    img_import_weight = get_normalized_pic(img_ori_f,'sum_one')
+    #print 'sum img weight', np.sum(img_import_weight)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    img_weight_dilated = cv2.dilate(img_import_weight,kernel,iterations=2)
+    img_weight_dilated = get_normalized_pic(img_weight_dilated,'sum_one')
+    #print 'sum img weight after dilating',np.sum(img_weight_dilated)
+
+    if show_weight_img:
+        plt.figure("weight image")
+        plt.imshow(img_import_weight,cmap='gray')
+        plt.figure("dilated weight image")
+        plt.imshow(img_weight_dilated, cmap='gray')
+        plt.show()
+
+
+    imgsize = img_ori.shape[0]*img_ori.shape[1]
+    weighted_err = img_weight_dilated * img_diff_ori
+    err_rms = rms(weighted_err) *imgsize
+
+    return err_rms
+
+
+
+
+
+
 def get_PSNR(img_ori_path, img_de_path,count_multi=[-1]):
     if count_multi[0]!=-1:
         count_multi[0] += 1
@@ -200,8 +281,8 @@ def get_SSIM(img_ori_path, img_de_path,count_multi):
 
 
 
-def get_MADlist_by_multiProcess(imagedata,func):
-    pool = multiprocessing.Pool(processes=4)
+def get_MADlist_by_multiProcess(imagedata,func,process_num=4):
+    pool = multiprocessing.Pool(processes=process_num)
     manager = multiprocessing.Manager()
 
     count = manager.list([0])
@@ -221,12 +302,7 @@ def get_MADlist_by_multiProcess(imagedata,func):
     pool.join()
     print "finish."
     for i in range(len(datalist)):
-        # dmos = datalist[i][0]
         mad = datalist[i][1].get()
-        # detype = datalist[i][2]
-        # imgde = datalist[i][3]
-        # if dmos ==0 and mad!=0:
-        #     print dmos,mad,detype,imgde
         datalist[i][1] = mad
     datalistR = copy.deepcopy(datalist)
     return datalistR
