@@ -215,6 +215,8 @@ def getWeightedMAD(img_ori_path, img_de_path, count_multi=[-1]):
 
     #img_diff = get_percei_lum(img_ori) - get_percei_lum(img_de)
     img_diff_ori = img_ori-img_de
+    img_diff_f = get_filtered_CSF_img(get_percei_lum(img_diff_ori))
+
 
     img_ori_L = get_percei_lum(img_ori)
     img_ori_f = get_filtered_CSF_img(img_ori_L) #img_ori_f 作为一个权值

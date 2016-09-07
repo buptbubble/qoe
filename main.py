@@ -18,7 +18,7 @@ if __name__ == "__main__":
     madlist = []
     dmoslist = []
 
-    imagedata = live_db2.get_picinfo_all_folder(40)
+    imagedata = live_db2.get_picinfo_all_folder(10)
     #imagedata = live_db2.get_degrade_ref_pic(live_db2.wn_path)
 
     funcset = []
