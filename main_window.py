@@ -29,12 +29,20 @@ class mainWindow():
             self.subtk_label1.pack()
 
         w_img = self.lsk.get_W_img(clickp,11)
+        np.set_printoptions(precision=2,suppress=True)
+        print w_img
+        w_img = cv2.normalize(w_img,alpha=0,beta=255,norm_type=cv2.NORM_MINMAX,dtype=cv2.CV_8UC1)
 
-        #mat_selected = self.pic[clicky:clicky+20,clickx:clickx+20]
-        #self.image_sel = self.mat2tkimg(mat_selected)
+        fScale = 10
+        shape_ori = w_img.shape
+        shape_new = [0,0]
+        shape_new[0] = shape_ori[0] * fScale
+        shape_new[1] = shape_ori[1] * fScale
 
 
-        self.weight_img = self.mat2tkimg(w_img)
+        w_img_scale = cv2.resize(w_img,tuple(shape_new),interpolation=cv2.INTER_NEAREST)
+
+        self.weight_img = self.mat2tkimg(w_img_scale)
         self.subtk_label1.configure(image=self.weight_img)
 
         self.tk_child.focus()
