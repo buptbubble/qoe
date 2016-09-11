@@ -85,6 +85,9 @@ class LSK_method:
         return C
 
 
+    def get_K_info(self,center_p,cur_p):
+
+
     def get_K(self,center_p,cur_p):
         C = np.matrix(self.get_mat_C(center_p))
         det_c = la.det(C)
@@ -115,6 +118,9 @@ class LSK_method:
 
                 cur_p = center_p + delta_p
                 K = self.get_K(center_p, cur_p)
+
+                print 'center_p:',center_p,'  cur_p:',cur_p, 'center-cur:',center_p-cur_p
+                print K
                 k_img[cur_x + filter_r][cur_y + filter_r] = K
         return k_img
 
@@ -161,11 +167,12 @@ class LSK_method:
         s2 = sigma[1]
         v1 = np.matrix(v[0,:])
         v2 = np.matrix(v[1, :])
-        #print  v2[0,0]
-        print 'pattern degree:',math.atan(v2[0,1]/v2[0,0])/math.pi *180
+        #print 'v1:',v1
+        #print 'v2:',v2
+        print 'pattern degree:',"{:.2f}".format(math.atan(v2[0,0]/v2[0,1])/math.pi *180)
 
         print 'V mat:\n',v
-        print 'Sigma mat:\n',sigma
+        #print 'Sigma mat:\n',sigma
         a1 = (s1 + 1) / (s2 + 1)
         a2 = (s2 + 1) / (s1 + 1)
         gamma = np.power((s1 + s2 + 1e-6) / 9, 0.008)
