@@ -86,7 +86,7 @@ class LSK_method:
 
 
     def get_K_info(self,center_p,cur_p):
-
+        pass
 
     def get_K(self,center_p,cur_p):
         C = np.matrix(self.get_mat_C(center_p))
