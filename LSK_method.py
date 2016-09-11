@@ -2,6 +2,7 @@ import cv2
 from matplotlib import pyplot as plt
 import numpy as np
 from numpy import linalg as la
+import math
 
 
 def copyBlock_center(img,center,size):
@@ -71,6 +72,18 @@ class LSK_method:
 
         mat_c = gamma * ((a1 ** 2) * v1.T * v1 + (a2 ** 2) * v2.T * v2)
         return mat_c
+
+    def get_mat_C_byJ(self,center_p):
+        roi_x = center_p[0]
+        roi_y = center_p[1]
+        block_deri_x = copyBlock_center(self.pic_deri_x, (roi_x, roi_y), 5)
+        block_deri_y = copyBlock_center(self.pic_deri_y, (roi_x, roi_y), 5)
+        roixarr = mat2array(block_deri_x)
+        roiyarr = mat2array(block_deri_y)
+        mat_j = np.matrix(np.hstack((roixarr, roiyarr)))
+        C = mat_j.T * mat_j
+        return C
+
 
     def get_K(self,center_p,cur_p):
         C = np.matrix(self.get_mat_C(center_p))
@@ -146,16 +159,19 @@ class LSK_method:
         u, sigma, v = la.svd(mat_j)
         s1 = sigma[0]
         s2 = sigma[1]
-        v1 = np.matrix(v[:, 0])
-        v2 = np.matrix(v[:, 1])
+        v1 = np.matrix(v[0,:])
+        v2 = np.matrix(v[1, :])
+        #print  v2[0,0]
+        print 'pattern degree:',math.atan(v2[0,1]/v2[0,0])/math.pi *180
+
         print 'V mat:\n',v
         print 'Sigma mat:\n',sigma
         a1 = (s1 + 1) / (s2 + 1)
         a2 = (s2 + 1) / (s1 + 1)
         gamma = np.power((s1 + s2 + 1e-6) / 9, 0.008)
-        print 'gamma:',gamma,' a1_2:',a1,'  a2_2:',a2
-        print 'v1.T * v1\n',(a1 ** 2) * v1.T * v1
-        print 'v2.T * v2\n',(a2 ** 2) * v2.T * v2
+        #print 'gamma:',gamma,' a1_2:',a1,'  a2_2:',a2
+        #print 'v1.T * v1\n',(a1 ** 2) * v1.T * v1
+        #print 'v2.T * v2\n',(a2 ** 2) * v2.T * v2
         mat_c = gamma * ((a1 ** 2) * v1.T * v1 + (a2 ** 2) * v2.T * v2)
         print 'C mat:\n',mat_c
         print 'det C:\n',la.det(mat_c)
@@ -170,6 +186,16 @@ if __name__ == "__main__":
     center_x = 50
     center_y = 50
     center_p = np.array([center_x,center_y])
+
+    C_byJ = lsk.get_mat_C_byJ(center_p)
+    C_byJ = cv2.normalize(C_byJ,alpha=0,beta=1,norm_type=cv2.NORM_MINMAX)
+
+    C_bySing = lsk.get_mat_C(center_p)
+    C_bySing = cv2.normalize(C_bySing, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+    print C_byJ
+
+    print C_bySing
+    exit(0)
 
 
     wimg = lsk.get_W_img(center_p,11)

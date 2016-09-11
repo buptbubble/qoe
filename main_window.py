@@ -26,7 +26,8 @@ class mainWindow():
         return ImageTk.PhotoImage(Image.fromarray(matimg))
 
     def callback(self,event):
-        print("Click position:", event.x-1, event.y-1)
+        print '----------------------------------'
+        print "Click position:", event.x-1, event.y-1
 
         clickp = np.array([event.y-1,event.x-1])
         if self.tk_child == None:
@@ -63,9 +64,9 @@ class mainWindow():
         pic_deriy = self.lsk.getDeriY(clickp,5)
         print 'K image:\n',k_img
 
-        print 'pic_roi\n',pic_roi
-        print 'pic_derix\n',pic_derix
-        print 'pic_deriy\n',pic_deriy
+        #print 'pic_roi\n',pic_roi
+        #print 'pic_derix\n',pic_derix
+        #print 'pic_deriy\n',pic_deriy
 
 
         w_img = cv2.normalize(w_img,alpha=0,beta=255,norm_type=cv2.NORM_MINMAX,dtype=cv2.CV_8UC1)
