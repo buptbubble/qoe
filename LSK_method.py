@@ -64,8 +64,8 @@ class LSK_method:
         u, sigma, v = la.svd(mat_j)
         s1 = sigma[0]
         s2 = sigma[1]
-        v1 = np.matrix(v[:, 0])
-        v2 = np.matrix(v[:, 1])
+        v1 = np.matrix(v[0, :])
+        v2 = np.matrix(v[1, :])
         a1 = (s1 + 1) / (s2 + 1)
         a2 = (s2 + 1) / (s1 + 1)
         gamma = np.power((s1 + s2 + 1e-6) / 9, 0.008)
@@ -86,7 +86,13 @@ class LSK_method:
 
 
     def get_K_info(self,center_p,cur_p):
-        pass
+        C = np.matrix(self.get_mat_C(center_p))
+        c_multi = np.matrix(center_p - cur_p) * C * np.matrix(center_p - cur_p).T
+        print 'c_multi:',c_multi
+        expval = math.exp(c_multi/-2)
+        print 'expval:',expval
+
+
 
     def get_K(self,center_p,cur_p):
         C = np.matrix(self.get_mat_C(center_p))
@@ -118,9 +124,6 @@ class LSK_method:
 
                 cur_p = center_p + delta_p
                 K = self.get_K(center_p, cur_p)
-
-                print 'center_p:',center_p,'  cur_p:',cur_p, 'center-cur:',center_p-cur_p
-                print K
                 k_img[cur_x + filter_r][cur_y + filter_r] = K
         return k_img
 
@@ -187,24 +190,16 @@ class LSK_method:
 
 
 
+
 if __name__ == "__main__":
     lsk = LSK_method('pics/Lenna.png')
 
-    center_x = 50
-    center_y = 50
-    center_p = np.array([center_x,center_y])
-
-    C_byJ = lsk.get_mat_C_byJ(center_p)
-    C_byJ = cv2.normalize(C_byJ,alpha=0,beta=1,norm_type=cv2.NORM_MINMAX)
-
-    C_bySing = lsk.get_mat_C(center_p)
-    C_bySing = cv2.normalize(C_bySing, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
-    print C_byJ
-
-    print C_bySing
-    exit(0)
 
 
-    wimg = lsk.get_W_img(center_p,11)
+
+
+
+
+
     plt.imshow(wimg, cmap='gray', interpolation='none')
     plt.show()

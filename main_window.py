@@ -18,12 +18,20 @@ def resizeByScale(img,scale):
 class mainWindow():
     def __init__(self):
         self.root = Tk()
+
+        self.root.bind('<FocusIn>',self.focus_tk_child)
         self.tk_child = None
         self.picpath = 'pics/Lenna.png'
 
         self.runfunc()
     def mat2tkimg(self,matimg):
         return ImageTk.PhotoImage(Image.fromarray(matimg))
+
+
+    def focus_tk_child(self,event):
+        if self.tk_child != None:
+            self.tk_child.focus()
+
 
     def callback(self,event):
         print '----------------------------------'
@@ -58,15 +66,11 @@ class mainWindow():
         w_img = self.lsk.get_W_img(clickp,11)
         np.set_printoptions(precision=2,suppress=True)
 
-        k_img = self.lsk.get_K_img(clickp,11)
+        k_img = self.lsk.get_K_img(clickp,21)
         pic_roi = self.lsk.getROI(clickp,5)
         pic_derix = self.lsk.getDeriX(clickp,5)
         pic_deriy = self.lsk.getDeriY(clickp,5)
-        print 'K image:\n',k_img
 
-        #print 'pic_roi\n',pic_roi
-        #print 'pic_derix\n',pic_derix
-        #print 'pic_deriy\n',pic_deriy
 
 
         w_img = cv2.normalize(w_img,alpha=0,beta=255,norm_type=cv2.NORM_MINMAX,dtype=cv2.CV_8UC1)
@@ -98,7 +102,9 @@ class mainWindow():
         self.label7.configure(image = self.derix_img)
         self.label9.configure(image = self.deriy_img)
 
+
         self.lsk.printInfo(clickp)
+
 
         self.tk_child.focus()
 
@@ -114,6 +120,8 @@ class mainWindow():
         image = ImageTk.PhotoImage(image)
         label1 = Label(self.root,image = image)
         label1.bind("<Button-1>", self.callback)
+
+
         label1.pack()
 
         mainloop()
