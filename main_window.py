@@ -63,10 +63,10 @@ class mainWindow():
             self.label9.grid(row=9)
 
 
-        w_img = self.lsk.get_W_img(clickp,11)
+        w_img = self.lsk.get_W_img(clickp,7)
         np.set_printoptions(precision=2,suppress=True)
 
-        k_img = self.lsk.get_K_img(clickp,21)
+        k_img = self.lsk.get_K_img(clickp,11)
         pic_roi = self.lsk.getROI(clickp,5)
         pic_derix = self.lsk.getDeriX(clickp,5)
         pic_deriy = self.lsk.getDeriY(clickp,5)
