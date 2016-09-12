@@ -104,7 +104,7 @@ class mainWindow():
 
 
         self.lsk.printInfo(clickp)
-
+        self.lsk.get_Saliency(clickp)
 
         self.tk_child.focus()
 

@@ -130,6 +130,46 @@ class LSK_method:
                 w_img[cur_x + filter_r][cur_y + filter_r] = W
         return w_img
 
+    #P: size of LSK (in edge length)
+    #L: number of LSK in feature matrix (count in edge length)
+    def get_FeatureMatrix(self,center_p, P, L):
+        w_img = self.get_W_img(center_p, L + 2)
+        F_matrix = np.zeros((P ** 2, L ** 2))
+        count = 0
+        for x in range(L):
+            for y in range(L):
+                cur_p = np.array([x + 1, y + 1])
+                wblock = copyBlock_center(w_img, cur_p, P).reshape((P ** 2))
+                F_matrix[:, count] = wblock
+                count += 1
+        return F_matrix
+
+    # N: size of region for compution self-resemblance
+    # P: size of LSK (in edge length)
+    # L: number of LSK in feature matrix (count in edge length)
+    def get_Saliency(self,center_p,N,P,L):
+        F_mat_list = []
+        r = (N-1)/2
+        for cur_x in range(N):
+            cur_x -= r
+            for cur_y in range(N):
+                cur_y -= r
+                delta_p = np.array([cur_x,cur_y])
+
+                cur_p = center_p+delta_p
+                F_mat = self.get_FeatureMatrix(cur_p,P,L)
+                F_mat_list.append(F_mat)
+        F_mat_center = self.get_FeatureMatrix(center_p,P,L)
+
+
+
+
+
+
+
+
+
+
     def getROI(self,center_p,size):
         picblock = copyBlock_center(self.pic,center_p,size)
         return picblock
