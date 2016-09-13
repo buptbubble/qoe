@@ -47,6 +47,10 @@ def get_surround_pixel(center_p):
             else:
                 continue
 
+def convPoint2Str(point):
+    text = str(point[0])+'_'+str(point[1])
+    return text
+
 
 class LSK_method:
     def __init__(self,imgpath):
@@ -58,6 +62,15 @@ class LSK_method:
         self.duration_getW = 0
         self.duration_getFmat = 0
         self.duration_getSaliency = 0
+
+        self.matC_dict = {}
+        self.K_dict = {}
+        self.W_dict = {}
+
+
+        self.Kcount_dirt = 0
+        self.Kcount = 0
+
     def get_mat_C(self,center_p):
         roi_x = center_p[0]
         roi_y = center_p[1]
@@ -86,19 +99,39 @@ class LSK_method:
 
 
     def get_K(self,center_p,cur_p):
-        C = np.matrix(self.get_mat_C(center_p))
-        det_c = la.det(C)
-        return (np.sqrt(det_c) / (self.h ** 2)) * np.exp\
-            ((np.matrix(center_p - cur_p) * C * np.matrix(center_p - cur_p).T) / (-2 * self.h ** 2))
+        K_key = convPoint2Str(center_p) + '_' + convPoint2Str(cur_p)
+        self.Kcount +=1
+        if K_key in self.K_dict.keys():
+            K = self.K_dict[K_key]
+            self.Kcount_dirt+=1
+            return K
+        else:
+            center_p_key = convPoint2Str(center_p)
+            if center_p_key not in self.matC_dict.keys():
+                C = np.matrix(self.get_mat_C(center_p))
+                self.matC_dict[center_p_key] = C
+            else:
+                C = self.matC_dict[center_p_key]
+
+
+
+            K = (np.sqrt(la.det(C)) / (self.h ** 2)) * np.exp \
+                ((np.matrix(center_p - cur_p) * C * np.matrix(center_p - cur_p).T) / (-2 * self.h ** 2))
+            self.K_dict[K_key] = K
+            return K
 
     def get_W(self,center_p,cur_p):
-        K_surround = 0
-        for surround_p in get_surround_pixel(center_p):
-            K_surround += self.get_K(surround_p,cur_p)
-
-        K_center = self.get_K(center_p, cur_p)
-        W_cur = K_center / K_surround
-        return W_cur
+        w_key = convPoint2Str(center_p)+'_'+convPoint2Str(cur_p)
+        if w_key in self.W_dict.keys():
+            W_cur = self.W_dict[w_key]
+        else:
+            K_surround = 0
+            for surround_p in get_surround_pixel(center_p):
+                K_surround += self.get_K(surround_p,cur_p)
+            K_center = self.get_K(center_p, cur_p)
+            W_cur = K_center / K_surround
+            self.W_dict[w_key] = W_cur
+            return W_cur
 
     def get_K_img(self, center_p, size):
         k_img = np.zeros((size, size))
@@ -118,7 +151,6 @@ class LSK_method:
 
     def get_W_img(self,center_p,size):
         begin = time.time()
-
         w_img = np.zeros((size,size))
         if size%2 != 1:
             raise NameError('size must be odder')
@@ -138,7 +170,6 @@ class LSK_method:
 
     #P: size of LSK (in edge length)
     #L: number of LSK in feature matrix (count in edge length)
-
     def get_FeatureMatrix(self,center_p, P, L):
         begin = time.time()
         w_img = self.get_W_img(center_p, L + 2)
@@ -191,16 +222,9 @@ class LSK_method:
         mat1 = mat1/mat1norm
         mat2 = mat2/mat2norm
         sigma = 0.07
-        similar = np.exp( -1 * (la.norm(mat1-mat2)) ** 2 / (2 * sigma**2))
+        matDiffNorm = la.norm(mat1-mat2) ** 2
+        similar = np.exp( -1 * matDiffNorm / (2 * sigma**2)  )
         return similar
-
-
-
-
-
-
-
-
 
 
     def getROI(self,center_p,size):
@@ -246,16 +270,9 @@ class LSK_method:
 
 if __name__ == "__main__":
     lsk = LSK_method('pics/Lenna.png')
+    center_p = np.array([50,50])
+    cur_p = np.array([50,51])
+    k = lsk.get_K(center_p,cur_p)
 
-    a = np.matrix(np.arange(9).reshape((3,3)))
-    b = np.matrix(np.arange(9).reshape((3,3)))
-    b = b - 1
-
-    print a
-    print b
-
-
-    g = lsk.matrix_similar(b,a)
-    print g
 
 
