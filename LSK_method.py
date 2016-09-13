@@ -3,6 +3,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 from numpy import linalg as la
 import math
+import time
+
 
 
 def copyBlock_center(img,center,size):
@@ -53,6 +55,9 @@ class LSK_method:
         self.pic_deri_y =  cv2.Sobel(self.pic, cv2.CV_32F, 0, 1)/8
         self.h =1
 
+        self.duration_getW = 0
+        self.duration_getFmat = 0
+        self.duration_getSaliency = 0
     def get_mat_C(self,center_p):
         roi_x = center_p[0]
         roi_y = center_p[1]
@@ -89,7 +94,6 @@ class LSK_method:
     def get_W(self,center_p,cur_p):
         K_surround = 0
         for surround_p in get_surround_pixel(center_p):
-
             K_surround += self.get_K(surround_p,cur_p)
 
         K_center = self.get_K(center_p, cur_p)
@@ -98,7 +102,6 @@ class LSK_method:
 
     def get_K_img(self, center_p, size):
         k_img = np.zeros((size, size))
-
         if size % 2 != 1:
             raise NameError('size must be odder')
         filter_r = (size - 1) / 2
@@ -114,8 +117,9 @@ class LSK_method:
         return k_img
 
     def get_W_img(self,center_p,size):
-        w_img = np.zeros((size,size))
+        begin = time.time()
 
+        w_img = np.zeros((size,size))
         if size%2 != 1:
             raise NameError('size must be odder')
         filter_r = (size-1)/2
@@ -128,11 +132,15 @@ class LSK_method:
                 cur_p = center_p + delta_p
                 W = self.get_W(center_p, cur_p)
                 w_img[cur_x + filter_r][cur_y + filter_r] = W
+        duration = time.time()-begin
+        self.duration_getW += duration
         return w_img
 
     #P: size of LSK (in edge length)
     #L: number of LSK in feature matrix (count in edge length)
+
     def get_FeatureMatrix(self,center_p, P, L):
+        begin = time.time()
         w_img = self.get_W_img(center_p, L + 2)
         F_matrix = np.zeros((P ** 2, L ** 2))
         count = 0
@@ -142,12 +150,16 @@ class LSK_method:
                 wblock = copyBlock_center(w_img, cur_p, P).reshape((P ** 2))
                 F_matrix[:, count] = wblock
                 count += 1
+        #print 'finish get feature mat'
+        duration = time.time()-begin
+        self.duration_getFmat += duration
         return F_matrix
 
     # N: size of region for compution self-resemblance
     # P: size of LSK (in edge length)
     # L: number of LSK in feature matrix (count in edge length)
-    def get_Saliency(self,center_p,N,P,L):
+    def get_Saliency(self,center_p,N=7,P=3,L=3):
+        begin = time.time()
         F_mat_list = []
         r = (N-1)/2
         for cur_x in range(N):
@@ -160,6 +172,27 @@ class LSK_method:
                 F_mat = self.get_FeatureMatrix(cur_p,P,L)
                 F_mat_list.append(F_mat)
         F_mat_center = self.get_FeatureMatrix(center_p,P,L)
+        mat_similar = 0
+        for mat in F_mat_list:
+            mat_similar+=self.matrix_similar(mat,F_mat_center)
+        duration = time.time() - begin
+        self.duration_getSaliency += duration
+        return 1/mat_similar
+
+
+    def matrix_similar(self,mat1,mat2):
+        mat1 = np.matrix(mat1)
+        mat2 = np.matrix(mat2)
+
+        if mat1.shape != mat2.shape:
+            raise NameError('Matrix must have same shape')
+        mat1norm = la.norm(mat1,'fro')
+        mat2norm = la.norm(mat2,'fro')
+        mat1 = mat1/mat1norm
+        mat2 = mat2/mat2norm
+        sigma = 0.07
+        similar = np.exp( -1 * (la.norm(mat1-mat2)) ** 2 / (2 * sigma**2))
+        return similar
 
 
 
@@ -213,4 +246,16 @@ class LSK_method:
 
 if __name__ == "__main__":
     lsk = LSK_method('pics/Lenna.png')
+
+    a = np.matrix(np.arange(9).reshape((3,3)))
+    b = np.matrix(np.arange(9).reshape((3,3)))
+    b = b - 1
+
+    print a
+    print b
+
+
+    g = lsk.matrix_similar(b,a)
+    print g
+
 

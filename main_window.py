@@ -106,6 +106,11 @@ class mainWindow():
         self.lsk.printInfo(clickp)
         self.lsk.get_Saliency(clickp)
 
+        S = self.lsk.get_Saliency(clickp)
+        print 'Saliency:',S
+        print 'Duration get W image:',self.lsk.duration_getW
+        print 'Duration get feature:',self.lsk.duration_getFmat
+        print 'Duration of calculating saliency:',self.lsk.duration_getSaliency
         self.tk_child.focus()
 
     def quit(self):
