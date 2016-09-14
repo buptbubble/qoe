@@ -66,6 +66,7 @@ class LSK_method:
         self.matC_dict = {}
         self.K_dict = {}
         self.W_dict = {}
+        self.Feature_dict = {}
 
 
         self.Kcount_dirt = 0
@@ -124,6 +125,7 @@ class LSK_method:
         w_key = convPoint2Str(center_p)+'_'+convPoint2Str(cur_p)
         if w_key in self.W_dict.keys():
             W_cur = self.W_dict[w_key]
+            return W_cur
         else:
             K_surround = 0
             for surround_p in get_surround_pixel(center_p):
@@ -172,18 +174,26 @@ class LSK_method:
     #L: number of LSK in feature matrix (count in edge length)
     def get_FeatureMatrix(self,center_p, P, L):
         begin = time.time()
-        w_img = self.get_W_img(center_p, L + 2)
-        F_matrix = np.zeros((P ** 2, L ** 2))
-        count = 0
-        for x in range(L):
-            for y in range(L):
-                cur_p = np.array([x + 1, y + 1])
-                wblock = copyBlock_center(w_img, cur_p, P).reshape((P ** 2))
-                F_matrix[:, count] = wblock
-                count += 1
-        #print 'finish get feature mat'
-        duration = time.time()-begin
-        self.duration_getFmat += duration
+        f_key = convPoint2Str(center_p)
+        F_matrix = 0
+        if f_key in self.Feature_dict.keys():
+            F_matrix = self.Feature_dict[f_key]
+
+        else:
+            w_img = self.get_W_img(center_p, L + 2)
+            F_matrix = np.zeros((P ** 2, L ** 2))
+            count = 0
+            for x in range(L):
+                for y in range(L):
+                    cur_p = np.array([x + 1, y + 1])
+                    wblock = copyBlock_center(w_img, cur_p, P).reshape((P ** 2))
+                    F_matrix[:, count] = wblock
+                    count += 1
+            self.Feature_dict[f_key] = F_matrix
+
+
+        duration = time.time() - begin
+        self.duration_getFmat+=duration
         return F_matrix
 
     # N: size of region for compution self-resemblance
@@ -270,9 +280,10 @@ class LSK_method:
 
 if __name__ == "__main__":
     lsk = LSK_method('pics/Lenna.png')
-    center_p = np.array([50,50])
-    cur_p = np.array([50,51])
-    k = lsk.get_K(center_p,cur_p)
+
+
+
+
 
 
 

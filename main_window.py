@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from Tkinter import *
+from ttk import *
 import cv2
 from PIL import Image
 from PIL import ImageTk
@@ -22,7 +23,7 @@ class mainWindow():
         self.root.bind('<FocusIn>',self.focus_tk_child)
         self.tk_child = None
         self.picpath = 'pics/Lenna.png'
-
+        self.processRatio = 0
         self.runfunc()
     def mat2tkimg(self,matimg):
         return ImageTk.PhotoImage(Image.fromarray(matimg))
@@ -31,6 +32,35 @@ class mainWindow():
     def focus_tk_child(self,event):
         if self.tk_child != None:
             self.tk_child.focus()
+
+
+    def cal_Saliency_Display(self):
+
+
+        width = self.pic.shape[0]
+        height = self.pic.shape[1]
+        N=7
+        P=3
+        L=3
+        totalmarin = (N+L*2)*2
+        sali_img = np.zeros((width-totalmarin,height-totalmarin))
+        count = 0
+        count_total = (height-totalmarin) * (width-totalmarin)
+        for x in range(height-totalmarin):
+            for y in range(width-totalmarin):
+                count+=1
+
+                # cur_p = np.array([x+totalmarin/2,y+totalmarin/2])
+                # sali = self.lsk.get_Saliency(cur_p,N,P,L)
+                # sali_img[x][y] = sali
+
+                self.processRatio = int((count*1.0/count_total)*100)
+                self.processbar1.value = self.processRatio
+                print self.processRatio
+
+
+
+
 
 
     def callback(self,event):
@@ -85,11 +115,6 @@ class mainWindow():
         pic_derix_scale = resizeByScale(pic_derix,10)
         pic_deriy_scale = resizeByScale(pic_deriy,10)
 
-
-
-
-
-
         self.weight_img = self.mat2tkimg(w_img_scale)
         self.k_img = self.mat2tkimg(k_img_scale)
         self.roi_img = self.mat2tkimg(pic_roi_scale)
@@ -128,14 +153,16 @@ class mainWindow():
         self.pic = cv2.imread(self.picpath,cv2.CV_LOAD_IMAGE_GRAYSCALE)
         self.lsk = LSK_method(self.picpath)
 
-        image = Image.fromarray(self.pic)
-        image = ImageTk.PhotoImage(image)
+        image=self.mat2tkimg(self.pic)
         label1 = Label(self.root,image = image)
         label1.bind("<Button-1>", self.callback)
+        label1.grid(row=0,column = 0,columnspan=2, sticky=W+E+N+S)
 
+        dobutton = Button(self.root,text='Cal. Saliency',command=self.cal_Saliency_Display)
+        dobutton.grid(row=1,column=0,sticky='W',padx=20,pady=5)
 
-        label1.pack()
-
+        self.processbar1 = Progressbar(self.root,orient = 'horizontal',maximum=100,variable = self.processRatio)
+        self.processbar1.grid(row=1,column=1,sticky = 'W',ipadx=120)
         mainloop()
 
 if __name__ == '__main__':
